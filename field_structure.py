@@ -73,6 +73,54 @@ def B_wave (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
 
 	return [B_r, B_theta, B_phi]
 
+## A unit vector in the direction of local magnetic field. eq. (9)
+
+def b_unit (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
+	vect = B (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
+	size_vect = math.sqrt(vect[0].real**2 + vect[1].real**2 + vect[2].real**2)
+	return [ vect[0].real/size_vect, vect[1].real/size_vect, vect[2].real/size_vect ]
+
+## Numerical divergency of local magnetic field
+
+def div_b_uni_num  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
+	h = 1e2
+	b_r_l = b_unit (l_lim, m_lim, Q, r-h, theta, phi, r_g, r_ns)
+	b_r_r = b_unit (l_lim, m_lim, Q, r+h, theta, phi, r_g, r_ns)
+	db_r=[]
+	db_r.append(0.5*(b_r_r[0] - b_r_l[0]) / h)
+	db_r.append(0.5*(b_r_r[1] - b_r_l[1]) / h)
+	db_r.append(0.5*(b_r_r[2] - b_r_l[2]) / h)
+
+	h = 1e-4
+	b_theta_l = b_unit (l_lim, m_lim, Q, r, theta-h, phi, r_g, r_ns)
+	b_theta_r = b_unit (l_lim, m_lim, Q, r, theta+h, phi, r_g, r_ns)
+	db_theta=[]
+	db_theta.append(0.5*(b_theta_r[0] - b_theta_l[0]) / (r*h))
+	db_theta.append(0.5*(b_theta_r[1] - b_theta_l[1]) / (r*h))
+	db_theta.append(0.5*(b_theta_r[2] - b_theta_l[2]) / (r*h))
+
+	h = 1e-4
+	b_phi_l = b_unit (l_lim, m_lim, Q, r, theta, phi-h, r_g, r_ns)
+	b_phi_r = b_unit (l_lim, m_lim, Q, r, theta, phi+h, r_g, r_ns)
+	db_phi=[]
+	db_phi.append(0.5*(b_phi_r[0] - b_phi_l[0]) / (r*math.sin(theta)*h))
+	db_phi.append(0.5*(b_phi_r[1] - b_phi_l[1]) / (r*math.sin(theta)*h))
+	db_phi.append(0.5*(b_phi_r[2] - b_phi_l[2]) / (r*math.sin(theta)*h))
+
+	return [db_r, db_theta, db_phi]	
+
+def curvature_radius  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
+	b_ =  b_unit (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
+	div_b_ = div_b_uni_num  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
+	f1 = b_[0] * (div_b_[0])[0] + b_[1] * (div_b_[1])[0] + b_[2] * (div_b_[2])[0]
+	f2 = b_[0] * (div_b_[0])[1] + b_[1] * (div_b_[1])[1] + b_[2] * (div_b_[2])[1]
+	f3 = b_[0] * (div_b_[0])[2] + b_[1] * (div_b_[1])[2] + b_[2] * (div_b_[2])[2]
+	res = 1.0 / math.sqrt(f1**2 + f2**2 + f3**2)
+	res = res / r_ns
+
+#	res = 1.0 / (np.dot(first_factor, second_factor))
+	return res
+
 ## Differential equation for geometry of magnetic field lines. eq. (33-34)
 ## Possibly it is not proper to divide on r_ns (??)
 
@@ -127,6 +175,28 @@ def plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
 				x.append(r_d[k]*math.cos(res_analit[k]))		
 				y.append(r_d[k]*math.sin(res_analit[k]))
 			plt.plot(x, y, 'b')
+
+## Field lines from the previous magnetic pole
+
+	for i in range (-10, 10):
+		init_cond = np.zeros(2)
+		init_cond[0] = math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(1.0)/10.)
+		init_cond[1] = 0.0
+#		res_analit = np.arcsin(1.45e-2 * math.sqrt(1.0/P) * i * np.sqrt(r_d/r_ns)/10.)
+		r_d_v = r_d[::-1]
+		res = odeint (diff_eq, init_cond, r_d_v, args=(Q, l_lim, m_lim, r_g, r_ns)).T
+#		print i, len(r_d), len(res), len(res_analit)
+		x=[]
+		y=[]
+		for k in range (0, len(res[0])):
+			x.append(r_d_v[k]*math.cos(res[0][k]))		
+			y.append(r_d_v[k]*math.sin(res[0][k]))
+#		print x
+
+#		plt.xscale('log')
+#		plt.yscale('log')
+		plt.plot(x, y, 'r')
+
 	plt.show()
 
 
@@ -135,24 +205,35 @@ def plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
 r_ns = 1e6      ## 10 km in cm/s
 r_g  = 4.1e5    ## for M = 1.4 M_solar
 
-r_d  = np.arange(50*r_ns, r_ns, -(49.0/1000.0)*r_ns) 
+r_d  = np.arange(50*r_ns, r_ns, -(49.0/10000.0)*r_ns) 
 
 
 
 #######################################
 ## Multipole expansion for test case ##
 #######################################
-l_lim=4
+l_lim=25
 m_lim=1
 Q = np.zeros([l_lim, m_lim])
 print Q
 Q[1][0] = 100000.0
-Q[2][0] = -70000.0
-#Q[3][0] = 100000.0
+#Q[2][0] = -70000.0
+Q[5][0] = -300000.0
+#Q[10][0] = 300000.0
 
 #######################################
 P = 1.0
 flag_dipole = True
+
+
+res_analit = math.asin(1.45e-2 * math.sqrt(1.0/P) * np.sqrt(2.0*r_ns/r_ns))
+print 'Here it is going to print curvature radius', res_analit
+for i in range (-20, 20):
+	if (i != 0):
+		print i*res_analit/20., curvature_radius  (l_lim, m_lim, Q, 2*r_ns, i*res_analit/20., 0, r_g, r_ns)
+
+
+
 plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d)
 
 #delta_r = 49.0/1.e3 * r_ns
