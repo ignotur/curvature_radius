@@ -91,19 +91,19 @@ r_g  = 4.1e5    ## for M = 1.4 M_solar
 
 r_d  = np.arange(50*r_ns, r_ns, -(49.0/1000.0)*r_ns) 
 
-#print r_d
-
-init_cond = np.zeros(2)
-init_cond[0] = math.asin(1.45e-2 * math.sqrt(50.0))
-init_cond[1] = 0.0
-
-l_lim=3
+#######################################
+## Multipole expansion for test case ##
+#######################################
+l_lim=4
 m_lim=1
-
 Q = np.zeros([l_lim, m_lim])
 print Q
 Q[1][0] = 100000.0
-Q[2][0] = -100000.0
+#Q[2][0] = -100000.0
+#Q[3][0] = 100000.0
+
+#######################################
+
 
 #delta_r = 49.0/1.e3 * r_ns
 #for i in range (0, len(r_d)):
@@ -115,9 +115,22 @@ Q[2][0] = -100000.0
 #	init_cond[0] = init_cond[0] + tmp[0]
 #	print 'Angle change: ', tmp, init_cond[0] 
 
+
 ## ---------- Final test ----------------
+## Initial condition - dipole field at large (50 R_ns) distance
+init_cond = np.zeros(2)
+init_cond[0] = math.asin(1.45e-2 * math.sqrt(50.0))
+init_cond[1] = 0.0
+
+
+
 res_analit = np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns))
 res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
+res_analit = np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/10.)
+res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
+
+
+
 #print res[0]
 print res[0][100:103], res_analit[100:103]
 plt.plot (r_d, res[0], r_d, res_analit)
