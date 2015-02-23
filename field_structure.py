@@ -89,7 +89,7 @@ def diff_eq (angle, r, Q, l_lim, m_lim, r_g, r_ns):
 ## Initial condition - dipole field at large (50 R_ns) distance
 ## Test over analytical solution when it is possible (pure dipole field)
 
-def plot_angle_test (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
+def plot_angle (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
 	for i in range (-10, 10):
 		init_cond = np.zeros(2)
 		init_cond[0] = math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(50.0)/10.)
@@ -100,92 +100,34 @@ def plot_angle_test (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
 		plt.plot(r_d, res[0], 'g')
 		if (flag_dipole):
 			plt.plot(r_d, res_analit, 'b')
-#	for i in range (1, 10):
-#		init_cond = np.zeros(2)
-#		init_cond[0] = -math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(50.0)/10.)
-#		init_cond[1] = 0.0
-#		res_analit = -np.arcsin(1.45e-2 * math.sqrt(1.0/P) * i * np.sqrt(r_d/r_ns)/10.)
-#		res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
+	plt.show()
+
+def plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
+	for i in range (-10, 10):
+		init_cond = np.zeros(2)
+		init_cond[0] = math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(50.0)/10.)
+		init_cond[1] = 0.0
+		res_analit = np.arcsin(1.45e-2 * math.sqrt(1.0/P) * i * np.sqrt(r_d/r_ns)/10.)
+		res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
 #		print i, len(r_d), len(res), len(res_analit)
-#		plt.plot(r_d, res[0], 'g')
-#		if (flag_dipole):
-#			plt.plot(r_d, res_analit, 'b')
-#
-#	init_cond = np.zeros(2)
-#	init_cond[0] = math.asin(1.45e-2 * 0.0 * math.sqrt(50.0))
-#	init_cond[1] = 0.0
-#	res_analit = np.arcsin(1.45e-2 * 0.0 * np.sqrt(r_d/r_ns))
-#	res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-#	print i, len(r_d), len(res), len(res_analit)
-#	plt.plot(r_d, res[0], 'g')
-#	if (flag_dipole):
-#		plt.plot(r_d, res_analit, 'b')
+		x=[]
+		y=[]
+		for k in range (0, len(res[0])):
+			x.append(r_d[k]*math.cos(res[0][k]))		
+			y.append(r_d[k]*math.sin(res[0][k]))
+#		print x
 
+#		plt.xscale('log')
+#		plt.yscale('log')
+		plt.plot(x, y, 'g')
+		if (flag_dipole):
+			x=[]
+			y=[]
+			for k in range (0, len(res[0])):
+				x.append(r_d[k]*math.cos(res_analit[k]))		
+				y.append(r_d[k]*math.sin(res_analit[k]))
+			plt.plot(x, y, 'b')
 	plt.show()
-
-	
-
-def plot_angles (l_lim, m_lim, Q, P, flag_dipole):
-	init_cond = np.zeros(2)
-	init_cond[0] = math.asin(1.45e-2 * math.sqrt(50.0))
-	init_cond[1] = 0.0
-
-
-	res_analit = np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns))
-	res = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = math.asin(1.45e-2 * math.sqrt(50.0)/2.)
-	init_cond[1] = 0.0
-	res_analit1 = np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/2.)
-	res1 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = -math.asin(1.45e-2 * math.sqrt(50.0)/2.)
-	init_cond[1] = 0.0
-	res_analit2 = -np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/2.)
-	res2 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = math.asin(1.45e-2 * math.sqrt(50.0)/6.)
-	init_cond[1] = 0.0
-	res_analit3 = np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/6.)
-	res3 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = -math.asin(1.45e-2 * math.sqrt(50.0))
-	init_cond[1] = 0.0
-	res_analit4 = -np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns))
-	res4 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = -math.asin(1.45e-2 * math.sqrt(50.0)/6.)
-	init_cond[1] = 0.0
-	res_analit5 = -np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/6.)
-	res5 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = -math.asin(1.45e-2 * math.sqrt(50.0)/1.5)
-	init_cond[1] = 0.0
-	res_analit4 = -np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/1.5)
-	res4 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-	init_cond = np.zeros(2)
-	init_cond[0] = -math.asin(1.45e-2 * math.sqrt(50.0)/1.5)
-	init_cond[1] = 0.0
-	res_analit5 = -np.arcsin(1.45e-2 * np.sqrt(r_d/r_ns)/1.5)
-	res5 = odeint (diff_eq, init_cond, r_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-
-
-
-	#print res[0][100:103], res_analit[100:103]
-	plt.plot (r_d, res[0], r_d, res_analit, r_d, res1[0], r_d, res_analit1, r_d, res2[0], r_d, res_analit2, r_d, res3[0], r_d, res_analit3, r_d, res4[0], r_d, res_analit4, r_d, res5[0], r_d, res_analit5)
-	plt.xscale('log')
-	plt.xlabel('Distance from NS surface (cm)')
-	plt.ylabel('Angle (radians)')
-	plt.show()
-##---------------------------------------
-
 
 
 
@@ -206,12 +148,12 @@ Q = np.zeros([l_lim, m_lim])
 print Q
 Q[1][0] = 100000.0
 Q[2][0] = -70000.0
-Q[3][0] = 100000.0
+#Q[3][0] = 100000.0
 
 #######################################
 P = 1.0
 flag_dipole = True
-plot_angle_test (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d)
+plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d)
 
 #delta_r = 49.0/1.e3 * r_ns
 #for i in range (0, len(r_d)):
