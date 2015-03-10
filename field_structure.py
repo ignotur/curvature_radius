@@ -1,5 +1,6 @@
 from scipy.special import *
 from scipy.integrate import *
+from string import *
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -109,6 +110,8 @@ def div_b_uni_num  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
 
 	return [db_r, db_theta, db_phi]	
 
+## Function to compute curvature radius
+
 def curvature_radius  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns):
 	b_ =  b_unit (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
 	div_b_ = div_b_uni_num  (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
@@ -131,6 +134,17 @@ def diff_eq (angle, r, Q, l_lim, m_lim, r_g, r_ns):
 	field = B (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
 	res[0] = (1.0/r) * field[1].real / field[0].real
 	res[1] = (1.0/r*math.sin(theta)) * field[2].real / field[0].real
+	return res
+
+def diff_eq_flat_angle (r, theta, Q, l_lim, m_lim, r_g, r_ns):
+#	res = np.zeros(2)
+#	theta = angle[0]
+#	phi   = angle[1]
+	phi=0
+	field = B (l_lim, m_lim, Q, r, theta, phi, r_g, r_ns)
+#	res[0] = (1.0/r) * field[1].real / field[0].real
+	res =  r * field[0].real / field[1].real
+#	res[1] = (1.0/r*math.sin(theta)) * field[2].real / field[0].real
 	return res
 
 
@@ -175,27 +189,37 @@ def plot_xy (l_lim, m_lim, Q, P, flag_dipole, r_ns, r_g, r_d):
 				x.append(r_d[k]*math.cos(res_analit[k]))		
 				y.append(r_d[k]*math.sin(res_analit[k]))
 			plt.plot(x, y, 'b')
+		#################################################
+		## Field lines from the 'classical' magnetic pole
+		##################################################
 
-## Field lines from the previous magnetic pole
 
-	for i in range (-10, 10):
-		init_cond = np.zeros(2)
-		init_cond[0] = math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(1.0)/10.)
-		init_cond[1] = 0.0
-#		res_analit = np.arcsin(1.45e-2 * math.sqrt(1.0/P) * i * np.sqrt(r_d/r_ns)/10.)
-		r_d_v = r_d[::-1]
-		res = odeint (diff_eq, init_cond, r_d_v, args=(Q, l_lim, m_lim, r_g, r_ns)).T
-#		print i, len(r_d), len(res), len(res_analit)
-		x=[]
-		y=[]
-		for k in range (0, len(res[0])):
-			x.append(r_d_v[k]*math.cos(res[0][k]))		
-			y.append(r_d_v[k]*math.sin(res[0][k]))
-#		print x
-
-#		plt.xscale('log')
-#		plt.yscale('log')
-		plt.plot(x, y, 'r')
+#	for i in range (-40, 40):
+#		init_cond = np.zeros(2)
+#		init_cond[0] = math.asin(1.45e-2 * math.sqrt(1.0/P) * i * math.sqrt(1.0)/5.)
+#		init_cond[1] = 0.0
+#		init_cond_r = r_ns
+#		upper_value=init_cond[0]/math.fabs(init_cond[0])
+#		print 'look here----', upper_value
+#		theta_d = np.arange(init_cond[0], 0.5*upper_value, 0.5/100.0*upper_value)
+#		if (i != 0):
+#			res = odeint (diff_eq_flat_angle, init_cond_r, theta_d, args=(Q, l_lim, m_lim, r_g, r_ns)).T	
+#			flag_open = False
+#			print '***********************'
+#			print res
+#			print '***********************'
+#			#print theta_d
+#			res_int = res[0]
+#			print res_int
+#			print '***********************'
+#			x=[]
+#			y=[]
+#			for k in range (0, len(res_int)):
+#				x.append(res_int[k]*math.cos(theta_d[k]))	
+#				y.append(res_int[k]*math.sin(theta_d[k]))
+#			print x
+#			print y
+#			plt.plot(x, y, 'r')
 
 	plt.show()
 
@@ -207,30 +231,60 @@ r_g  = 4.1e5    ## for M = 1.4 M_solar
 
 r_d  = np.arange(50*r_ns, r_ns, -(49.0/10000.0)*r_ns) 
 
-
-
 #######################################
 ## Multipole expansion for test case ##
 #######################################
-l_lim=25
+l_lim=70
 m_lim=1
 Q = np.zeros([l_lim, m_lim])
-print Q
-Q[1][0] = 100000.0
-#Q[2][0] = -70000.0
-Q[5][0] = -300000.0
+#print Q
+#Q[1][0] = 100000.0
+#Q[3][0] = -90000.0
+#Q[20][0] = 10000.0
 #Q[10][0] = 300000.0
 
 #######################################
-P = 1.0
+
+########################################
+## Reading multipole structure from file
+########################################
+
+g=open ('multipoles_noAccretion.d', 'r')
+lines = g.readlines()
+
+for i in range (5890, 5950):
+	line = split(lines[i])
+	value = float(line[1])
+	Q[i-5889][0] = value
+	print i-5889, line, value
+	
+
+
+P = 0.1
 flag_dipole = True
 
 
 res_analit = math.asin(1.45e-2 * math.sqrt(1.0/P) * np.sqrt(2.0*r_ns/r_ns))
 print 'Here it is going to print curvature radius', res_analit
-for i in range (-20, 20):
-	if (i != 0):
-		print i*res_analit/20., curvature_radius  (l_lim, m_lim, Q, 2*r_ns, i*res_analit/20., 0, r_g, r_ns)
+print 'R = 1.5 R_ns'
+for i in range (1, 20):
+	value = B (l_lim, m_lim, Q, 1.5*r_ns, i*res_analit/20., 0.0,r_g,r_ns)
+	det = math.sqrt(value[0].real**2 + value[1].real**2) 
+	print i*res_analit/20., curvature_radius(l_lim, m_lim, Q, 1.5*r_ns, i*res_analit/20., 0, r_g, r_ns), '\t', value[0].real, '\t', value[1].real,'\t',det 
+print 'R = 5 R_ns'
+for i in range (1, 20):
+	value = B (l_lim, m_lim, Q, 5.0*r_ns, i*res_analit/20., 0.0,r_g,r_ns)
+	det = math.sqrt(value[0].real**2 + value[1].real**2) 
+	print i*res_analit/20., curvature_radius(l_lim, m_lim, Q, 5.0*r_ns, i*res_analit/20., 0, r_g, r_ns), '\t', value[0].real, '\t', value[1].real,'\t', det
+
+print 'R = 10 R_ns'
+for i in range (1, 20):
+	value = B (l_lim, m_lim, Q, 10.0*r_ns, i*res_analit/20., 0.0,r_g,r_ns)
+	det = math.sqrt(value[0].real**2 + value[1].real**2) 
+	print i*res_analit/20., curvature_radius(l_lim, m_lim, Q, 10.*r_ns, i*res_analit/20., 0, r_g, r_ns), '\t', value[0].real, '\t', value[1].real,'\t', det
+
+
+
 
 
 
